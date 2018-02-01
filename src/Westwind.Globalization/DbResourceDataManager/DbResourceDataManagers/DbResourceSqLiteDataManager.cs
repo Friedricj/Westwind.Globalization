@@ -1,7 +1,11 @@
-
+using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 using System.Linq;
 using Westwind.Globalization.Properties;
+using Westwind.Utilities;
+using Westwind.Utilities.Data;
 
 namespace Westwind.Globalization
 {
@@ -45,6 +49,97 @@ namespace Westwind.Globalization
             }
         }
 
+        /// <summary>
+        /// Returns a list of all the resources for all locales. The result is in a 
+        /// table called TResources that contains all fields of the table. The table is
+        /// ordered by LocaleId.
+        /// 
+        /// This version returns either local or global resources in a Web app
+        /// 
+        /// Fields:
+        /// ResourceId,Value,LocaleId,ResourceSet,Type
+        /// </summary>
+        /// <param name="localResources">return local resources if true</param>        
+        /// <returns></returns>
+        public override List<ResourceItem> GetAllResources(bool localResources = false, bool applyValueConverters = false, string resourceSet = null)
+        {
+            List<ResourceItem> items;
+            using (var data = GetDb())
+            {
+
+                string resourceSetFilter = "";
+                if (!string.IsNullOrEmpty(resourceSet))
+                    resourceSetFilter = " AND resourceset = @ResourceSet2 ";
+
+                string sql = "select ResourceId,Value,LocaleId,ResourceSet,Type,TextFile,BinFile,Filename,Comment,ValueType,Updated " +
+                             "from " + Configuration.ResourceTableName + " " +
+                             "where ResourceSet Is Not Null " +
+                              resourceSetFilter +
+                             " ORDER BY ResourceSet,LocaleId, ResourceId";
+
+                //var parms = new List<IDbDataParameter> { data.CreateParameter("@ResourceSet", "%.%") };
+
+                var parms = new List<IDbDataParameter>();
+                if (!string.IsNullOrEmpty(resourceSetFilter))
+                    parms.Add(data.CreateParameter("@ResourceSet2", resourceSet));
+
+
+                using (var reader = data.ExecuteReader(sql, parms.ToArray()))
+                {
+                    if (reader == null)
+                    {
+                        SetError(data.ErrorMessage);
+                        return null;                        
+                    }
+
+                    items = new List<ResourceItem>();
+                    while (reader.Read())
+                    {
+                        var item = new ResourceItem();
+                        item.ResourceId = reader["ResourceId"] as string;
+                        item.ResourceSet = reader["ResourceSet"] as string;
+                        item.Value = reader["Value"];
+                        item.LocaleId = reader["LocaleId"] as string;
+                        item.Type = reader["Type"] as string;
+                        item.TextFile = reader["TextFile"] as string;
+                        item.BinFile = reader["BinFile"] as byte[];
+                        item.Comment = reader["Comment"] as string;
+
+                        var number = reader["ValueType"];  // int64 returned from Microsoft.Data.SqLite
+                        if (number is int)
+                            item.ValueType = (int) number;
+                        else
+                            item.ValueType = Convert.ToInt32(number);                        
+
+                        var time = reader["Updated"];     // string return from Microsoft.Data.SqLite               
+                        if (time == null)
+                            item.Updated = DateTime.MinValue;
+                        
+                        if (time is DateTime)
+                            item.Updated = (DateTime) time;
+                        else
+                            item.Updated = Convert.ToDateTime(time);
+
+                        items.Add(item);
+                    }
+                }
+                
+                if (applyValueConverters && DbResourceConfiguration.Current.ResourceSetValueConverters.Count > 0)
+                {
+                    foreach (var resourceItem in items)
+                    {
+                        foreach (var convert in DbResourceConfiguration.Current.ResourceSetValueConverters)
+                        {
+                            if (resourceItem.ValueType == convert.ValueType)
+                                resourceItem.Value = convert.Convert(resourceItem.Value, resourceItem.ResourceId);
+                        }
+                    }
+                }
+
+                return items;
+            }
+        }
+
         public override bool IsLocalizationTable(string tableName = null)
         {
             if (tableName == null)
@@ -56,9 +151,13 @@ namespace Westwind.Globalization
 
             using (var data = GetDb())
             {
-                var tables = data.ExecuteTable("TTables", sql, tableName);
+                
+                var reader = data.ExecuteReader(sql, tableName);
 
-                if (tables == null || tables.Rows.Count < 1)
+                if (reader == null)
+                    throw new InvalidOperationException(Resources.ConnectionFailed + ": " + data.ErrorMessage);
+
+                if (!reader.HasRows)
                 {
                     SetError(data.ErrorMessage);
                     return false;
@@ -66,6 +165,32 @@ namespace Westwind.Globalization
             }
 
             return true;            
+        }
+
+        /// <summary>
+        /// Creates an instance of the DataAccess Data provider
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <returns></returns>
+        public override DataAccessBase GetDb(string connectionString = null)
+        {
+            if (connectionString == null)
+                connectionString = Configuration.ConnectionString;
+
+            DbProviderFactory provider = null;
+            try
+            {
+                provider = DataUtils.GetDbProviderFactory(DataAccessProviderTypes.SqLite);
+            }
+            catch
+            {
+                throw new InvalidOperationException("Unable to load SqLite Data Provider. Make sure you have a reference to Microsoft.Data.Sqlite (.NET Core) or System.Data.SQLite (.NET 4.5).");
+            }
+
+            var db = new SqlDataAccess(connectionString, provider);            
+            db?.ExecuteNonQuery("PRAGMA journal_mode=WAL;");
+
+            return db;
         }
 
         public override bool CreateLocalizationTable(string tableName = null)
@@ -98,9 +223,6 @@ namespace Westwind.Globalization
 
             return true;
         }
-
-
-    
         
         protected override string TableCreationSql
         {
@@ -108,7 +230,7 @@ namespace Westwind.Globalization
             {
                 return
                     @"CREATE TABLE [{0}] (
- [Pk] INTEGER PRIMARY KEY AUTOINCREMENT 
+ [Pk] INTEGER PRIMARY KEY 
 , [ResourceId] nvarchar(1024) COLLATE NOCASE NOT NULL
 , [Value] ntext  NULL
 , [LocaleId] nvarchar(10) COLLATE NOCASE DEFAULT '' NULL
@@ -119,27 +241,26 @@ namespace Westwind.Globalization
 , [Filename] nvarchar(128) NULL
 , [Comment] nvarchar(512) NULL
 , [ValueType] unsigned integer(2) DEFAULT 0
-, [Updated] datetime NULL
+, [Updated] datetime  DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('HelloWorld','Hello Cruel World (SqlLite)','','Resources');
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('HelloWorld','Hallo schnöde Welt (SqlLite)','de','Resources');
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('HelloWorld','Bonjour tout le monde (SqlLite)','fr','Resources');
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('Yesterday','Yesterday (invariant)','','Resources');
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('Yesterday','Gestern','de','Resources');
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('Yesterday','Hier','fr','Resources');
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('Today','Today (invariant)','','Resources');
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('Today','Heute','de','Resources');
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('Today','Aujourd''hui','fr','Resources');
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('HelloWorld','Hello Cruel World (SqlLite) 1','','Resources');
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('HelloWorld','Hallo schnöde Welt (SqlLite)','de','Resources');
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('HelloWorld','Bonjour tout le monde (SqlLite)','fr','Resources');
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('Yesterday','Yesterday (invariant)','','Resources');
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('Yesterday','Gestern','de','Resources');
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('Yesterday','Hier','fr','Resources');
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('Today','Today (invariant)','','Resources');
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('Today','Heute','de','Resources');
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('Today','Aujourd''hui','fr','Resources');
 
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet,ValueType) VALUES ('MarkdownText','This is **MarkDown** formatted *HTML Text*','','Resources',2);
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet,ValueType) VALUES ('MarkdownText','Hier ist **MarkDown** formatierter *HTML Text*','de','Resources',2);
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet,ValueType) VALUES ('MarkdownText','Ceci est **MarkDown** formaté *HTML Texte*','fr','Resources',2);
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet,ValueType) VALUES ('MarkdownText','This is **MarkDown** formatted *HTML Text*','','Resources',2);
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet,ValueType) VALUES ('MarkdownText','Hier ist **MarkDown** formatierter *HTML Text*','de','Resources',2);
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet,ValueType) VALUES ('MarkdownText','Ceci est **MarkDown** formaté *HTML Texte*','fr','Resources',2);
 
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('lblHelloWorldLabel.Text','Hello Cruel World (local)','','ResourceTest.aspx');
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('lblHelloWorldLabel.Text','Hallo Welt (lokal)','de','ResourceTest.aspx');
-INSERT INTO [Localizations] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('lblHelloWorldLabel.Text','Bonjour monde (local)','fr','ResourceTest.aspx');
-
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('lblHelloWorldLabel.Text','Hello Cruel World (local)','','ResourceTest.aspx');
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('lblHelloWorldLabel.Text','Hallo Welt (lokal)','de','ResourceTest.aspx');
+INSERT INTO [{0}] (ResourceId,Value,LocaleId,ResourceSet) VALUES ('lblHelloWorldLabel.Text','Bonjour monde (local)','fr','ResourceTest.aspx');
 ";
             }
 

@@ -24,9 +24,7 @@ namespace Westwind.Globalization.Test
 
         [Test]
         public void DbResSimpleValues()
-        {
-
-
+        {            
             string val = DbRes.T("HelloWorld", "Resources", "en-US");
             Assert.AreNotEqual(val, "HelloWorld","Helloworld was not translated");
             Console.WriteLine(val);
@@ -65,14 +63,14 @@ namespace Westwind.Globalization.Test
         public void DbResHeavyLoad()
         {
             var dt = DateTime.Now;
-            for (int i = 0; i < 200; i++)
+            for (int i = 0; i < 100; i++)
             {
                 var t = new Thread(threadedDbRes);
                 t.Start(dt);                
             }
 
 
-            Thread.Sleep(3000);
+            Thread.Sleep(2000);
         }
 
 

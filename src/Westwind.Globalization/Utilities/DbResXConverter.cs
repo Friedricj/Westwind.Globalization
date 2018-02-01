@@ -2,7 +2,7 @@
 /*
  **************************************************************
  *  Author: Rick Strahl 
- *          © West Wind Technologies, 2009-2015
+ *          ï¿½ West Wind Technologies, 2009-2015
  *          http://www.west-wind.com/
  * 
  *
@@ -28,7 +28,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  **************************************************************  
 */
-#endregion
+#endregion 
 
 using System;
 using System.Collections;
@@ -100,8 +100,9 @@ namespace Westwind.Globalization
             get { return _basePhysicalPath; }
             set 
             {
-                if (value != null && !value.EndsWith("\\"))
-                    value += "\\";
+                
+                if (value != null && !value.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                    value += Path.DirectorySeparatorChar;
 
                 _basePhysicalPath = value; 
             }
@@ -263,7 +264,7 @@ namespace Westwind.Globalization
 
                             // Write out the file to disk
                             
-                            File.WriteAllText(resourcePath + "\\" + FileName, TextFile, Encode);
+                            File.WriteAllText(Path.Combine(resourcePath,FileName), TextFile, Encode);
                         }
                         catch(Exception ex)
                         {
@@ -276,7 +277,7 @@ namespace Westwind.Globalization
                     }
 
                     //<data name="Scratch" type="System.Resources.ResXFileRef, System.Windows.Forms">
-                    //  <value>Scratch.txt;System.String, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+                    //  <value>Scratch.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
                     //</data>
                     xWriter.WriteStartElement("data");
                     xWriter.WriteAttributeString("name", ResourceId);
@@ -348,6 +349,9 @@ namespace Westwind.Globalization
                 res.LocaleId = res.LocaleId.ToLower();
                 string stringValue = res.Value as string;
 
+                if ( string.IsNullOrEmpty(res.ResourceSet))
+                    continue;
+                
                 // Create a new output file if the resource set or locale changes
                 if (res.ResourceSet != lastSet || res.LocaleId != lastLocale)
                 {         
@@ -431,7 +435,7 @@ namespace Westwind.Globalization
                     }
 
                     //<data name="Scratch" type="System.Resources.ResXFileRef, System.Windows.Forms">
-                    //  <value>Scratch.txt;System.String, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+                    //  <value>Scratch.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
                     //</data>
                     xWriter.WriteStartElement("data");
                     xWriter.WriteAttributeString("name", res.ResourceId);
@@ -473,12 +477,12 @@ namespace Westwind.Globalization
                if (LocalResources)
                {
                    // Inject App_LocalResource
-                   ResourceSet = ResourceSet.Insert(ResourceSet.LastIndexOf('\\')+1, "App_LocalResources\\");
+                   ResourceSet = ResourceSet.Insert(ResourceSet.LastIndexOf(Path.DirectorySeparatorChar)+1, "App_LocalResources" + Path.DirectorySeparatorChar);
                    ResourceSet = BasePhysicalPath + ResourceSet;
                }
                else
                {
-                   ResourceSet = BasePhysicalPath + "App_GlobalResources\\" + ResourceSet;
+                   ResourceSet = Path.Combine( BasePhysicalPath, "App_GlobalResources",ResourceSet);
                }
 
                FileInfo fi = new FileInfo(ResourceSet);
@@ -524,8 +528,7 @@ namespace Westwind.Globalization
             else
                 path = BasePhysicalPath;
 
-            
-            resourceSet = Path.Combine(path, DbResourceUtils.NormalizePath(resourceSet));
+            resourceSet = Path.Combine(path, resourceSet);
                 
             
             if (IsLocalResourceSet(resourceSet) && !resourceSet.Contains("App_LocalResources"))
@@ -533,7 +536,7 @@ namespace Westwind.Globalization
                 string pathOnly = Path.GetDirectoryName(resourceSet);
                 string fileOnly = Path.GetFileName(resourceSet);
 
-                resourceSet = pathOnly + "\\App_LocalResources\\" + fileOnly;
+                resourceSet = Path.Combine(pathOnly,"App_LocalResources",fileOnly);
             }
 
             FileInfo fi = new FileInfo(resourceSet);
@@ -559,8 +562,8 @@ namespace Westwind.Globalization
                 webPath = BasePhysicalPath;
 
             webPath = webPath.ToLower();
-            if (!webPath.EndsWith("\\"))
-                webPath += "\\";
+            if (!webPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                webPath += Path.DirectorySeparatorChar;
 
             string[] directories;
             try
@@ -583,14 +586,14 @@ namespace Westwind.Globalization
                     string RelPath = webPath.Replace(BasePhysicalPath.ToLower(), "");
                     RelPath = RelPath.Replace("\\","/");
 
-                    ImportDirectoryResources(webPath + dir + "\\",RelPath) ;
+                    ImportDirectoryResources(webPath + dir + Path.DirectorySeparatorChar,RelPath) ;
                 }
                 else if (string.Compare(dir,"app_globalresources",StringComparison.OrdinalIgnoreCase) == 0)
-                    ImportDirectoryResources(webPath + dir + "\\","");
+                    ImportDirectoryResources(webPath + dir + Path.DirectorySeparatorChar,"");
 
                 else if (!("bin|obj|app_code|app_themes|app_data|.git|.svn|_svn|app_data|migrations|node_modules|bower_components|".Contains(dir.ToLower() + "|")))
                     // Recurse through child directories
-                    ImportWebResources(webPath + dir + "\\"); 
+                    ImportWebResources(webPath + dir + Path.DirectorySeparatorChar); 
             }
 
             return true;
@@ -608,12 +611,12 @@ namespace Westwind.Globalization
                 basePhysicalPath = BasePhysicalPath;
 
             // basePhysicalPath = basePhysicalPath.ToLower();
-            if (!basePhysicalPath.EndsWith("\\"))
-                basePhysicalPath += "\\";
+            if (!basePhysicalPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                basePhysicalPath += Path.DirectorySeparatorChar;
 
             // We need to create a Web relative path (ie. admin/myresources.resx)
             string relPath = basePhysicalPath.Replace(BasePhysicalPath, "");
-            relPath = relPath.Replace("\\", "/");
+            relPath = DbResourceUtils.NormalizePath(relPath);
 
             // Import the base path first
             ImportDirectoryResources(basePhysicalPath, relPath);
@@ -638,7 +641,7 @@ namespace Westwind.Globalization
                 if (dir == "" || ("|bin|obj|.git|.svn|_svn|app_code|app_themes|app_data|migrations|node_modules|bower_components|".Contains("|" + dir.ToLower() + "|")))
                     continue;
 
-                ImportWinResources(basePhysicalPath + dir + "\\");
+                ImportWinResources(basePhysicalPath + dir + Path.DirectorySeparatorChar);
             }
 
             return true;
@@ -661,6 +664,8 @@ namespace Westwind.Globalization
                 relativePath = "";
 
             string[] Files = Directory.GetFiles(path, "*.resx");
+
+            var cultureIds = CultureInfo.GetCultures(CultureTypes.AllCultures).Select(c => c.IetfLanguageTag).ToArray();
          
             foreach (string CurFile in Files)
             {
@@ -668,7 +673,9 @@ namespace Westwind.Globalization
                 
                 //string[] tokens = file.Replace(".resx","").Split('.');                
                 string[] tokens = Path.GetFileName(file).Replace(".resx", "").Split('.');
-                
+
+                if (tokens.Length == 0)
+                    continue;
 
                 // ResName: admin/default.aspx or default.aspx or resources (global or assembly resources)
                 string localeId = "";
@@ -681,19 +688,32 @@ namespace Westwind.Globalization
                     resName = resName.Replace("App_GlobalResources/", "");
 
 
-                if (tokens.Length > 1)
+                if (tokens.Length == 1)
                 {
-                    string extension = tokens[1];
-                    if ("aspx|ascx|master|sitemap|".Contains(extension.ToLower() + "|") )
-                        resName += "." + extension;
+                    localeId = "";
+                    resName = tokens[0];
+                }
+                else
+                {
+                    resName = "";
+                    var lastToken = tokens[tokens.Length - 1];
+                    if (cultureIds.Any( ci=> ci.ToLower() == lastToken.ToLower()))
+                    {
+                        localeId = lastToken;
+                        
+                        for (int i = 0; i < tokens.Length - 1; i++)
+                            resName += tokens[i] + ".";
+                        resName=resName.TrimEnd('.');
+                    }
                     else
-                        localeId = extension;
+                    {
+                        localeId = "";
+                        for (int i = 0; i < tokens.Length; i++)
+                            resName += tokens[i] + ".";
+                        resName = resName.TrimEnd('.');
+                    }                    
                 }
-                if (tokens.Length > 2)
-                {
-                    localeId = tokens[2];
-                }
-
+                
                 ImportResourceFile(file, resName, localeId);
             }
 
@@ -709,7 +729,7 @@ namespace Westwind.Globalization
     /// <returns></returns>
     public bool ImportResourceFile(string FileName,string ResourceSetName,string LocaleId)
     {
-        string filePath = Path.GetDirectoryName(FileName) + "\\";
+        string filePath = Path.GetDirectoryName(FileName) + Path.DirectorySeparatorChar;
 
         var data = DbResourceDataManager.CreateDbResourceDataManager();
 
@@ -791,7 +811,7 @@ namespace Westwind.Globalization
     /// <returns></returns>
     internal List<ResxItem> GetResXResources(string FileName)
     {
-        string FilePath = Path.GetDirectoryName(FileName) + "\\";
+        string FilePath = Path.GetDirectoryName(FileName) + Path.DirectorySeparatorChar;
 
         XmlDocument Dom = new XmlDocument();
 
@@ -1004,10 +1024,10 @@ namespace Westwind.Globalization
     <value>2.0</value>
   </resheader>
   <resheader name=""reader"">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name=""writer"">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
 </root>";
 

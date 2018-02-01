@@ -100,6 +100,29 @@ namespace Westwind.Globalization
         public string ConnectionString { get; set; } = "*** ENTER A CONNECTION STRING OR connectionStrings ENTRY HERE ***";
 
         /// <summary>
+        /// Determines which database provider is used. internally sets the DbResourceDataManagerType
+        /// when set.
+        /// </summary>
+        public DbResourceProviderTypes DataProvider
+        {
+            get { return _dataAcessProviderType; }
+            set
+            {
+                if (value == DbResourceProviderTypes.SqlServer)
+                    DbResourceDataManagerType = typeof(DbResourceSqlServerDataManager);
+                else if (value == DbResourceProviderTypes.MySql)
+                    DbResourceDataManagerType = typeof(DbResourceMySqlDataManager);
+                else if (value == DbResourceProviderTypes.SqLite)
+                    DbResourceDataManagerType = typeof(DbResourceSqLiteDataManager);
+                else if (value == DbResourceProviderTypes.SqlServerCompact)
+                    DbResourceDataManagerType = typeof(DbResourceSqlServerCeDataManager);
+
+                _dataAcessProviderType = value;
+            }
+        }
+        private DbResourceProviderTypes _dataAcessProviderType = DbResourceProviderTypes.SqlServer;
+
+        /// <summary>
         /// Database table name used in the database
         /// </summary>
         public string ResourceTableName { get; set; } = "Localizations";
@@ -147,6 +170,15 @@ namespace Westwind.Globalization
         public string ResxBaseFolder { get; set; } = "~/Properties/";
 
         /// <summary>
+        /// The ResourcePath used for IStringLocalizer as configured in .AddLocalization()
+        /// defaults to Properties.
+        /// </summary>
+        public string StringLocalizerResourcePath
+        {
+            get { return StringUtils.ExtractString(ResxBaseFolder, "/", "/", allowMissingEndDelimiter: true); }
+        }
+
+        /// <summary>
         /// Determines whether any resources that are not found are automatically
         /// added to the resource file.
         /// 
@@ -178,24 +210,19 @@ namespace Westwind.Globalization
         /// <summary>
         /// API key for Bing Translate API in the 
         /// Administration API.
+        /// https://www.microsoft.com/en-us/translator/getstarted.aspx
         /// </summary>
         public string BingClientId { get; set; }
-
-        /// <summary>
-        /// Bing Secret Key for Bing Translate API Access
-        /// </summary>
-        public string BingClientSecret { get; set; }
-
+        
         /// <summary>
         /// Google Translate API Key used to access Translate API.
         /// Note this is a for pay API!
         /// </summary>
         public string GoogleApiKey { get; set; }
 
-        
+     
         [JsonIgnore]
-        public List<IResourceSetValueConverter> ResourceSetValueConverters = new List<IResourceSetValueConverter>();
-
+        public List<IResourceSetValueConverter> ResourceSetValueConverters = new List<IResourceSetValueConverter>();              
 
         /// <summary>
         /// Allows you to override the data provider used to access resources.
@@ -207,7 +234,7 @@ namespace Westwind.Globalization
         [XmlIgnore]
         [JsonIgnore]
         [NonSerialized]
-        public Type DbResourceDataManagerType = typeof(DbResourceSqlServerDataManager);
+        public Type DbResourceDataManagerType = typeof(DbResourceSqlServerDataManager); 
 
         /// <summary>
         /// Internally used handler that is generically set to execute authorization
@@ -445,4 +472,6 @@ namespace Westwind.Globalization
         CSharp,
         Vb
     }
+
+    
 }

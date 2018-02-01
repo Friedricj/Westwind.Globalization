@@ -1,8 +1,10 @@
 ﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -11,6 +13,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Westwind.Globalization.AspNetCore.Extensions;
 using Westwind.Globalization.Errors;
+using Westwind.Globalization.Utilities;
 using Westwind.Utilities;
 
 namespace Westwind.Globalization.Administration
@@ -701,9 +704,13 @@ namespace Westwind.Globalization.Administration
                 if (string.IsNullOrEmpty(DbResourceConfiguration.Current.BingClientId))
                     result = ""; // don't do anything -  just return blank 
                 else
-                    result = translate.TranslateBing(text, @from, to);
+                    result = translate.TranslateBing(text, from, to);
             }
-
+            else if (service == "deepl")
+            {
+                result = translate.TranslateDeepL(text, from, to);
+            }
+            
             if (result == null)
                 result = translate.ErrorMessage;
 
@@ -745,6 +752,17 @@ namespace Westwind.Globalization.Administration
         }
 
         /// <summary>
+        /// Small helper that turns a camel case string into
+        /// space separated string.
+        /// </summary>
+        /// <param name="camelCaseString"></param>
+        /// <returns></returns>
+        [Route("FromCamelCase")]
+        public string FromCamelCase([FromBody] string camelCaseString)
+        {
+            return StringUtils.FromCamelCase(camelCaseString);
+        }
+        /// <summary>
         /// Returns configuration information so the UI can display this info on the configuration
         /// page.
         /// </summary>
@@ -767,20 +785,32 @@ namespace Westwind.Globalization.Administration
 
             var config = DbResourceConfiguration.Current;
 
+
+            var rt = typeof(IHostingEnvironment)
+                .GetTypeInfo()
+                .Assembly
+                .GetCustomAttribute<AssemblyFileVersionAttribute>();
+            var v = new Version(rt.Version);
+
             return Json(new
             {
                 //ProviderFactory = providerFactory,
                 config.ConnectionString,
                 config.ResourceTableName,
                 DbResourceProviderType = config.DbResourceDataManagerType.Name,
+                DataProvider = config.DataProvider.ToString(),
                 config.ResxExportProjectType,
                 config.ResxBaseFolder,
                 config.ResourceBaseNamespace,
                 config.StronglyTypedGlobalResource,
                 config.GoogleApiKey,
                 config.BingClientId,
-                config.BingClientSecret,
-                config.AddMissingResources
+                config.AddMissingResources,
+                ResourceAccessMode = config.ResourceAccessMode.ToString(),
+
+                Os = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
+                AspNetVersion = v.ToString()
+                
             },jsonSettings);
         }
 
@@ -832,7 +862,7 @@ namespace Westwind.Globalization.Administration
             else if (filename.StartsWith("~"))
                 filename = Request.MapPath(filename, basePath: Host.ContentRootPath);
 
-            filename = filename.Replace("/", "\\").Replace("\\\\", "\\");
+            filename = DbResourceUtils.NormalizePath(filename);
 
             if (string.IsNullOrEmpty(nameSpace))
                 nameSpace = config.ResourceBaseNamespace;
@@ -935,7 +965,7 @@ namespace Westwind.Globalization.Administration
             if (inputBasePath.Contains("~"))
                 inputBasePath = Request.MapPath(inputBasePath,basePath: Host.ContentRootPath);
 
-            inputBasePath = inputBasePath.Replace("/", "\\").Replace("\\\\", "\\");
+            inputBasePath = DbResourceUtils.NormalizePath(inputBasePath);
 
             DbResXConverter converter = new DbResXConverter(inputBasePath);
 

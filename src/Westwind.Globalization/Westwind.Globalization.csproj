@@ -1,26 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
-    <TargetFramework>netstandard2.0</TargetFramework>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' "> 
+  <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <!-- <TargetFrameworks>netstandard2.0;net45</TargetFrameworks> -->
-    <Version>3.0.0-preview1-3</Version>
+    <Version>3.0.0</Version>
     <Authors>Rick Strahl</Authors>
     <Company>West Wind Technologies</Company>
-    <Description>West Wind Globalization provides custom data driven .NET ResourceManagers and ResourceProviders for both plain .NET and ASP.NET applications as well as serving JavaScript resources from .NET resources. There's also a a rich real time Web Resource editor that can update resources live but you'll need the Web NuGet package for that feature to light up. 
+    <Description>
+      West Wind Globalization provides database localization providers for .NET 4.5+ and .NET Core 2+. This package also contains a number of Localization helpers to import and convert Resx resources, provide easy locale switching. Supported Db providers: Sql Server, SqLite, MySql.
 
-This core package includes only core, non-Web specific features which include the custom ResourceManager implementation with support for SQL Server, Sql Server Compact, MySql  and SqLite, DbRes dynamic resource access, DbResxConverter and strongly typed class generator. All the 'core' system features are contained in this package. 
-
-If you want to use ASP.NET ResourceProviders, JavaScript resources from .NET Resources, or the Web Resource Editor add the Westwind.Globalization.Web package.</Description>
-    <Summary>not used</Summary>
+      For use in Web applications add the Westwind.Globalization.Web or Westwind.Globalization.AspNetCore packages.
+    </Description>
+    <Summary>Database driven localization library for .NET Core and .NET 4.5+. Also includes many utilities for converting and loading Resx resource to and from Db Resources.</Summary>
     <Title>West Wind Globalization Database ResourceManager</Title>
-    <Copyright>West Wind Technologies</Copyright>
+    <Copyright>© West Wind Technologies, 2014-2018</Copyright>
     <PackageLicenseUrl>https://github.com/RickStrahl/Westwind.Globalization#license</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/RickStrahl/Westwind.Globalization</PackageProjectUrl>
     <PackageIconUrl>http://west-wind.com/westwind.globalization/images/Westwind.Localization_128.png</PackageIconUrl>
@@ -31,19 +27,28 @@ If you want to use ASP.NET ResourceProviders, JavaScript resources from .NET Res
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageReleaseNotes>.NET Standard 2.0 and .NET Core Support</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <FileVersion>3.0.20.0</FileVersion>
   </PropertyGroup>
 
-  <ItemGroup>    
-    <PackageReference Include="CommonMark.NET" Version="0.15.1" />    
-    <PackageReference Include="Westwind.Utilities" Version="3.0.2" />
+  <ItemGroup>
+    <PackageReference Include="CommonMark.NET" Version="0.15.1" />
+    <PackageReference Include="Westwind.Utilities" Version="3.0.10" />
   </ItemGroup>
 
-  <ItemGroup> 
+  <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0'">
     <DefineConstants>NETCORE;NETSTANDARD;NETSTANDARD2_0</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net45'">
+    <DefineConstants>NET45;NETFULL</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
+    <DocumentationFile>bin\Release\netstandard2.0\Westwind.Globalization.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
@@ -57,31 +62,9 @@ If you want to use ASP.NET ResourceProviders, JavaScript resources from .NET Res
     <Reference Include="System.Security" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Configuration" />
-  </ItemGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net45'">
-    <DefineConstants>NET45;NETFULL</DefineConstants>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <Reference Include="System.Design">
-      <HintPath>..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\System.Design.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  
-  <ItemGroup>
-    <Compile Update="Properties\Resources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
+    <Reference Include="System.Design" />
   </ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Update="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
 
-  
+
 </Project>

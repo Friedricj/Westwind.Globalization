@@ -584,6 +584,10 @@ namespace Westwind.Globalization.Web.Administration
                 else
                     result = translate.TranslateBing(text, @from, to);
             }
+            else if (service == "deepl")
+            {
+                result = translate.TranslateDeepL(text, from, to);
+            }
 
             if (result == null)
                 result = translate.ErrorMessage;
@@ -892,8 +896,7 @@ namespace Westwind.Globalization.Web.Administration
                 config.ResourceBaseNamespace,
                 config.StronglyTypedGlobalResource,
                 config.GoogleApiKey,
-                config.BingClientId,
-                config.BingClientSecret,
+                config.BingClientId,                
                 config.AddMissingResources                
             };
         }

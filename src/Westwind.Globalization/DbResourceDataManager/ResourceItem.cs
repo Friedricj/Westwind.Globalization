@@ -46,7 +46,7 @@ namespace Westwind.Globalization
     /// <summary>
     /// Returns a resource item that contains both Value and Comment
     /// </summary>
-    [DebuggerDisplay("Lang: {Type} - {ResourceId} - {Value}")]
+    [DebuggerDisplay("Lang: {Type} - {ResourceId} - {Value} - {ResourceSet}")]
     public class ResourceItem : INotifyPropertyChanged
     {
         /// <summary>
@@ -188,7 +188,7 @@ namespace Westwind.Globalization
             ResourceSet = reader["ResourceSet"] as string;
             LocaleId = reader["LocaleId"] as string;
             Type = reader["Type"] as string;
-            FileName = reader["FileName"] as string;
+            FileName = reader["Filename"] as string;
             TextFile = reader["TextFile"] as string;
             BinFile = reader["BinFile"] as byte[];
             Comment = reader["Comment"] as string;

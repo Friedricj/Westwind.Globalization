@@ -1,32 +1,50 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using NUnit.Framework;
+using Westwind.Utilities;
 using Westwind.Utilities.Data;
 
 
 namespace Westwind.Globalization.Test
 {
     [TestFixture]
-    public class DbResourceSqLiteDataManagerTests
+    public class DbResourceSqLiteDataManagerTests 
     {
+        string DataPath
+        {
+            get => FileUtils.NormalizePath(Path.Combine(TestContext.CurrentContext.TestDirectory,
+                "data/SqLiteLocalizations.db"));
+        }
 
         private IDbResourceDataManager GetManager()
         {
             var manager = new DbResourceSqLiteDataManager();
-            manager.Configuration.ConnectionString = "SqLiteLocalizations";
+           
+            manager.Configuration.ConnectionString = "Data Source=" + DataPath;
+
             //manager.Configuration.ResourceTableName = "Localizations";
             return manager;
         }
+        
+        public DbResourceSqLiteDataManagerTests()
+        {
+            //if (File.Exists(DataPath))
+            //    File.Delete(DataPath);
 
-
-  
+           //CreateTable();
+        }
 
         [Test]
         public void CreateTable()
         {
-            var manager = GetManager();
+            if (File.Exists(DataPath))
+                File.Delete(DataPath);
 
+            var manager = GetManager();
+            
             bool result = manager.CreateLocalizationTable();
 
             // no assertions as table can exist - to test explicitly remove the table
@@ -36,13 +54,32 @@ namespace Westwind.Globalization.Test
                 Console.WriteLine(manager.ErrorMessage);
         }
 
+        // Demonstrate Microsoft.Data.SqLite returns dates as strings
+        //[Test]
+        //public void ReadData()
+        //{
+        //    var db = new SqlDataAccess("Data Source=" + DataPath, DataAccessProviderTypes.SqLite);
+        //    using (var reader = db.ExecuteReader("select * from Localizations"))
+        //    {
+        //        while (reader.Read())
+        //        {
+        //            var updated = reader["Updated"];
+        //            Console.WriteLine(updated);
+        //            Assert.IsTrue(updated != null, "Updated shouldn't be null");
+        //            Assert.IsTrue(updated.GetType() == typeof(DateTime),"Invalid updated type: " + updated.GetType());
+        //        }
+        //    }
+        //}
+        
 
         [Test]
         public void IsLocalizationTable()
         {
-            var manager = GetManager();
+            var manager = GetManager();            
             Assert.IsTrue(manager.IsLocalizationTable("Localizations"), manager.ErrorMessage);
         }
+
+        
 
         [Test]
         public void GetAllResources()
@@ -50,7 +87,7 @@ namespace Westwind.Globalization.Test
             var manager = GetManager();
 
             var items = manager.GetAllResources(false);
-            Assert.IsNotNull(items);
+            Assert.IsNotNull(items,manager.ErrorMessage);
             Assert.IsTrue(items.Count > 0);
 
             ShowResources(items);    
@@ -102,7 +139,7 @@ namespace Westwind.Globalization.Test
 
             foreach (var item in items)
             {
-                Console.WriteLine(item.Value + ": " + item.Text + " " + (item.Selected ? "* " : "") );
+                Console.WriteLine(item.ResourceId + ": " + item.Text + " " + (item.Selected ? "* " : "") );
             }
         }
         
@@ -144,8 +181,9 @@ namespace Westwind.Globalization.Test
         {
             var manager = GetManager();
 
+            
             var items = manager.GetAllLocaleIds("Resources");
-            Assert.IsNotNull(items);
+            Assert.IsNotNull(items, manager.ErrorMessage);
             Assert.IsTrue(items.Count > 0);
 
             foreach (var localeId in items)
@@ -179,6 +217,7 @@ namespace Westwind.Globalization.Test
 
             Assert.IsNotNull(item);
             Assert.IsTrue(item == "Heute");
+            Console.WriteLine(item);
         }
 
         [Test]

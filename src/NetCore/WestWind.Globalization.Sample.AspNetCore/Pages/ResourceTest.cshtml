@@ -4,18 +4,32 @@
 @using AppResources
 @using Controllers
 @using Globalization.AspNetCore.Controllers
+@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
 @using Westwind.Globalization
 @using Westwind.Globalization.AspNetCore.Extensions
+@using Westwind.Globalization.AspNetCore
+
+@*@inject IStringLocalizer<LocalizationController> localizer*@
+
+@inject IViewLocalizer localizer
+@inject IStringLocalizer<LocalizationController> stringLocalizer;
+@inject IHtmlLocalizer<LocalizationController> htmlLocalizer;
 
 @{
     Layout = null;
-    string localeId = Request.Params("localeId");
+
+    // Manually setting threads is no longer supported
+    string localeId = HttpContext.Request.Params("culture");
     if (string.IsNullOrEmpty(localeId))
     {
-        localeId = CultureInfo.CurrentUICulture.IetfLanguageTag;
+        // Retrieve from RequestCultureProvider - Accept-header, Query, Cookie
+        var cultureProvider = HttpContext.Features.Get<IRequestCultureFeature>();
+        localeId = cultureProvider.RequestCulture.UICulture.IetfLanguageTag;
     }
-    CultureInfo.CurrentUICulture = new CultureInfo(localeId);
-    CultureInfo.CurrentCulture = new CultureInfo(localeId);
+
 }
 
 <!DOCTYPE html>
@@ -38,8 +52,8 @@
 
     <title>DbResourceManager Razor Sample (.NET Core)</title>
 
-    <link href="localizationAdmin/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="localizationAdmin/bower_components/fontawesome/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="localizationAdmin/scripts/vendor/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="localizationAdmin/scripts/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
     <link href="localizationAdmin/css/localizationAdmin.css" rel="stylesheet" />
     <style>
         label {
@@ -63,7 +77,7 @@
                 <div style="float: left; margin-left: 5px; line-height: 1.2">
                     <i style="color: steelblue; font-size: 0.8em; font-weight: bold;">West Wind Globalization</i><br />
                     <i style="color: whitesmoke; font-size: 1.25em; font-weight: bold;">
-                        DbResourceManager Razor @DbRes.T("Sample","ResourceTestPage") <small>(.NET Core)</small>
+                        DbResourceManager Razor @DbRes.T("Sample","Pages.ResourceTestPage") <small>(.NET Core)</small>
                     </i>
                 </div>
             </a>
@@ -74,12 +88,12 @@
         <ul id="MenuButtons" class="nav navbar-nav pull-right navbar">
             <li>
                 <a href="localizationAdmin/">
-                    <i class="fa fa-gears"></i> @DbRes.T("ResourceEditor","ResourceTestPage")
+                    <i class="fa fa-gears"></i> @localizer["ResourceEditor"]
                 </a>
             </li>            
             <li>
                 <a href="javascript:{}" id="EditResources">
-                    <i class="fa fa-flag"></i> @DbRes.T("EditResources","ResourceTestPage")
+                    <i class="fa fa-flag"></i> @localizer["EditResources"]
                 </a>
             </li>
             <li>
@@ -102,7 +116,7 @@
             </div>
             <div>
                 <form id="form1" name="form1" action="ResourceTest" method="GET">
-                    <select id="localeId" name="localeId"
+                    <select id="culture" name="culture"
                             onchange=" document.forms['form1'].submit(); "
                             class="form-control">
                         <option value="">Browser Default</option>
@@ -113,7 +127,7 @@
                     <script>
                     var localeId = '@localeId';
                     if (localeId) {
-                        var el = document.getElementById("localeId");
+                        var el = document.getElementById("culture");
                         for (var i = 0; i < el.options.length; i++) {
                             var opt = el.options[i];
                             if (opt.value === localeId)
@@ -131,7 +145,7 @@
         <div class="container">
 
             <h3>DbRes</h3>
-            <label>Using DbRes Direct Access Provider (default locale):</label>
+            <label>Using DbRes Direct (default locale):</label>
             <span data-resource-id="HelloWorld">@DbRes.T("HelloWorld", "Resources")</span>
 
             <label>Using DbRes Force to German:</label>
@@ -140,7 +154,21 @@
             <label>Missing Resource:</label>
             <span data-resource-id="MissingResource">@DbRes.T("MissingResource", "Resources")</span>
         </div>
+        
+        <div class="container">
+            <h3>IViewLocalizer</h3>
+            <label>Using localizer["HelloWorld"]:</label>
+            <span data-resource-id="HelloWorld">@localizer["HelloWorld"]</span>            
 
+            <label>Using stringLocalizer["HelloWorld"] (LocalizationController):</label>
+            @stringLocalizer["HelloWorld"]
+            
+            <label>Using htmlLocalizer["HelloWorld"] (LocalizationController):</label>
+            @htmlLocalizer["HelloWorldHtml"]
+
+            <label>Missing Resource:</label>
+            <span data-resource-id="MissingResource">@DbRes.T("MissingResource", "Resources")</span>
+        </div>
        
 
         <div class="container">
@@ -185,12 +213,14 @@
 
 
     <!-- Generates a resources = { "HelloWorld": "Hello World", "Today": "Today" } style variable that contains all server side resources translated for this resource set-->
-    <script src="@JavaScriptLocalizationResourcesController.GetJavaScriptResourcesUrl("resources","Resources",localeId)"></script>
+    @*<script src="@JavaScriptLocalizationResourcesController.GetJavaScriptResourcesUrl("resources","Resources",localeId)"></script>*@
+    
+    <script src="~/api/JavaScriptLocalizationResources?ResourceSet=Resources&VarName=resources&localeId=@localeId&ResourceMode=ResDb"></script>
     <script>
         document.querySelector("#JavaScriptHelloWorld").innerText = resources.HelloWorld;
     </script>
 
-    <script src="LocalizationAdmin/bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="LocalizationAdmin/scripts/vendor/jquery.min.js"></script>
     <script src="LocalizationAdmin/scripts/ww.resourceEditor.js"></script>
     <script>
         var toggleEditMode = false;

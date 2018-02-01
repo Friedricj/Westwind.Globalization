@@ -1,5 +1,8 @@
 
 using System.Collections.Generic;
+using System.Data.Common;
+using Westwind.Utilities;
+using Westwind.Utilities.Data;
 
 namespace Westwind.Globalization
 {
@@ -100,9 +103,9 @@ namespace Westwind.Globalization
 
             using (var data = GetDb())
             {
-                var tables = data.ExecuteTable("TTables", sql, tableName);
+                var tables = data.ExecuteReader(sql, tableName);
 
-                if (tables == null || tables.Rows.Count < 1)
+                if (tables == null || !tables.HasRows)
                 {
                     SetError(data.ErrorMessage);
                     return false;
@@ -143,9 +146,34 @@ namespace Westwind.Globalization
             return true;
         }
 
+        /// <summary>
+        /// Creates an instance of the DataAccess Data provider
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <returns></returns>
+        public override DataAccessBase GetDb(string connectionString = null)
+        {
+            if (connectionString == null)
+                connectionString = Configuration.ConnectionString;
 
-    
-        
+            DbProviderFactory provider = null;
+            try
+            {
+                provider = DataUtils.GetDbProviderFactory(DataAccessProviderTypes.MySql);
+            }
+            catch
+            {
+                   throw new System.InvalidOperationException(
+                          "Unable to load MySQL Data Provider. Make sure you have a reference to MySql.Data.");
+            }
+
+            var db = new SqlDataAccess(connectionString, provider);
+            return db;
+        }
+
+
+
+
         protected override string TableCreationSql
         {
             get
@@ -163,7 +191,7 @@ namespace Westwind.Globalization
   Filename varchar(128) DEFAULT NULL,
   Comment varchar(512) DEFAULT NULL,
   ValueType int(2) DEFAULT 0,
-  Updated datetime NULL,
+  Updated datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`pk`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 

@@ -13,9 +13,12 @@ namespace Westwind.Globalization.Utilities
         /// <param name="path"></param>
         public static string NormalizePath(string path)
         {
+            if (string.IsNullOrEmpty(path))
+                return path;
+
             char slash = System.IO.Path.DirectorySeparatorChar;
             path = path.Replace('/', slash).Replace('\\', slash);
-            return path;
+            return path.Replace(slash.ToString() + slash.ToString(), slash.ToString());
         }
     }
 }

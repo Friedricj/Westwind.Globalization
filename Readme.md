@@ -1,52 +1,82 @@
 # West Wind Globalization
 ### Database Resource Localization for .NET
 
-This library and tooling provides easy to use database resource managers and providers that allow you to use a database for storing localization resources. Unlike static Resx resources, database resources are dynamic and can be changed at runtime and are editable by multiple users at the same time. The custom resource managers and providers use the standard .NET resource infrastructure, so other than startup configuration there are no code changes when switching from using traditional Resx resources - and you can always switch back just as easily. 
+**Westwind.Globalization (.NET Standard, .NET 4.5+):**   
+[![NuGet](https://img.shields.io/nuget/v/Westwind.Globalization.svg)](https://www.nuget.org/packages/Westwind.Globalization/)
+![](https://img.shields.io/nuget/dt/Westwind.Globalization.svg)
+
+**Westwind.Globalization.AspNetCore (.NET Core):**  
+[![NuGet](https://img.shields.io/nuget/v/Westwind.Globalization.AspNetCore.svg)](https://www.nuget.org/packages/Westwind.Globalization.AspNetCore/)
+![](https://img.shields.io/nuget/dt/Westwind.Globalization.AspNetCore.svg)
+
+**Westwind.Globalization.Web (.NET 4.5+):**  
+[![NuGet](https://img.shields.io/nuget/v/Westwind.Globalization.Web.svg)](https://www.nuget.org/packages/Westwind.Globalization.Web/)
+![](https://img.shields.io/nuget/dt/Westwind.Globalization.Web.svg)
+
+
+This library and tooling provides easy to use database resource managers and providers that allow you to use a database for storing localization resources. Unlike static Resx resources, database resources are dynamic, can be changed at runtime and are editable by multiple users at the same time. The custom resource managers, providers and ASP.NET Core StringLocalizers use the standard .NET resource infrastructure, so other than startup configuration there are no code changes when switching from using traditional Resx resources. 
+
+It's also possible to import resources into a database, edit them dynamically, and then export them back out into Resx and optionally strongly typed classes so your deployed applications can run with Resx resources, while you can use dynamic Database resources during development.
 
 A rich, Web based resource editor is also provided that makes it easy to create resource content and translate it interactively in a running application where you can see resource changes immediately applied without recompilation. You can import and export Resx resources, generate strongly typed classes and serve resources to JavaScript applications using the database resources. 
+![Web Resource Editor](WebResourceLocalizationForm.png)
+
+### Quick Links
+
+* [Nuget Packages](#nuget)
+* [Features](#features)
+* [Installation and Configuration for .NET Core](#installation-netcore)
+* [Installation and Configuration for .NET 4.5+](#installation-fullframework)
+* [Using Resources in your Application](#resource-usage)
+* [The Web Resource Editor](#web-resource-editor)
 
 ### Requirements:
-* .NET Core 2.0
-* .NET 4.5 or later
-* SQL Server 2008-2014, SQL Server Express, SQL Compact 4, MySql, SqLite
+* .NET Core 2.0 or .NET 4.5 or later
+* SQL Server 2008-2016, SQL Server Express, SQL Compact 4, MySql, SqLite
 
 ### .NET Version Support
-
 Version 3.0 adds support for the 2.0 versions of .NET Standard, .NET Core and ASP.NET Core. The following versions are provided:
 
-* Westwind.Globalization <small>*(net45 and netstandard2.0)*</small>
-* Westwind.Globalization.AspNetCore <small>*(netstandard2.0)*</small>
-* Westwind.Globalization.Web <small>*(net45)*</small>
+* Westwind.Globalization <small>*(net45 and netstandard2.0)*</small>  
+[![NuGet](https://img.shields.io/nuget/v/Westwind.Globalization.svg)](https://www.nuget.org/packages/Westwind.Globalization/)
+![](https://img.shields.io/nuget/dt/Westwind.Globalization.svg)
+* Westwind.Globalization.AspNetCore <small>*(netstandard2.0)*</small>  
+[![NuGet](https://img.shields.io/nuget/v/Westwind.Globalization.AspNetCore.svg)](https://www.nuget.org/packages/Westwind.Globalization.AspNetCore/)
+![](https://img.shields.io/nuget/dt/Westwind.Globalization.AspNetCore.svg)
+* Westwind.Globalization.Web <small>*(net45)*</small>  
+[![NuGet](https://img.shields.io/nuget/v/Westwind.Globalization.Web.svg)](https://www.nuget.org/packages/Westwind.Globalization.Web/)
+![](https://img.shields.io/nuget/dt/Westwind.Globalization.Web.svg)
 * Westwind.Globalization.Sample <small>*(net45)*</small>
 * Westwind.Globalization.Sample.AspNetCore <small>*(netcore2.0)*</small>
 
-> Version 3.0 is Pre-Release
-> Version 3.0 is currently in pre-release and the documentation is still under construction. Bear with us.
-
+<a name="nuget"></a>
 ### Installation
-Installation is different depending on which version of .NET you are running under. .NET Core and Full Framework use different project types and NuGet Packages for the Web support.
+Installation is different depending on which version of .NET you are running under **.NET Core** and **Full Framework** use different project types and NuGet Packages for the Web support.
 
 > #### Limited non-Windows Support for Admin Features
-> The admin features of this package have not been fully ported to non-Windows platforms. Specifically, any of the RESX and Import Export features will not work on non-windows platforms currently. However database access and resource editing should work ell.
+> The admin features of this package have not been fully ported to non-Windows platforms. Specifically, any of the RESX and Import Export features will not work on non-windows platforms currently. However runtime database access is fully functional.
 
 For installation use NuGet.
 
 #### To Install for .NET Core
 Please read the installation instructions below to configure once you've installed the project. You will need to configure startup settings in order for the Db Providers to run.
-
+ 
 ```
 PM> Install-Package Westwind.Globalization.AspNetCore
 ```
-If you're not using a Web Project you can just use the core package:
+If you're not using a Web Project you can just use the base package:
 
 ```
 PM> Install-Package Westwind.Globalization
 ```
 
-If you want to use the Administration Web UI, you have to download and add the HTML components to your application. Download from:
-
-* [Localization Admin  Html Assets](https://github.com/RickStrahl/Westwind.Globalization/blob/Master/LocalizationAdminHtml/LocalizationAdministrationHtml_AspNetCore.zip?raw=true)
-* [Documentation for installing Localization Admin Files](DownloadableAssets/Readme.md)
+> #### ASP.NET Core Administration Web UI: Separate Download
+> Due to changes in NuGet support in .NET Core we can no longer package static HTML, CSS and JS as part of NuGet packages. As a result a **separate download is required** to add the Localization Admin UI. You can download it from:
+> 
+> * [Documentation for installing Localization Admin Files](https://github.com/RickStrahl/Westwind.Globalization/tree/master/DownloadableAssets)
+> * [Localization Admin  Html Assets Download](https://github.com/RickStrahl/Westwind.Globalization/blob/master/DownloadableAssets/LocalizationAdministrationHtml_AspNetCore.zip?raw=true)
+>
+> Unzip the contents of the Zip file into your project folder root, which creates the `./wwwroot/LocalizationAdmin` Web folder and adds related resources to `./Properties`.
 
 #### To Install on .NET Framework
 Please read the Installation Section below or watch the [Getting Started Video](https://youtu.be/ABR7ISppB1k), which describes how to install the packages, configure the project, import existing re
@@ -76,8 +106,10 @@ PM> Install-Package Westwind.Globalization
 * [License](#license)
 
 
+<a name="Features"></a>
 ### Features
 * .NET Resources in Sql Server, SqlCe, MySql and SqLite   
+* Injectable .NET Core StringLocalizers (ASP.NET Core)
 * ASP.NET Database ResourceProviders (ASP.NET/WebForms) 
 * .NET  ResourceManager (ASP.NET MVC,non-Web apps)
 * Uses standard .NET Resource infrastructure and caching
@@ -101,6 +133,7 @@ Because this library uses the standard .NET resource infrastructure using the Db
 > Resource Managers, so database access and usage is minimal. You can use these 
 > Providers/Manager in MVC, WebForms and even in non Web applications.
 
+<a name="web-resource-editor"></a>
 ### Web Resource Editor
 One of the main reasons people want to use Database resources rather
 than Resx resources is that it allows for dynamic updates of resources. Resx
@@ -178,15 +211,20 @@ To run the sample application you have to set up a database to provide the resou
 ## Installation and Configuration
 The easiest way to use this library in your own applications is to install the NuGet package into an ASP.NET application.
 
+<a name="installation-netcore"></a>
 ### ASP.NET Core Packages
 ```
 pm> Install-Package Westwind.Globalization.AspNetCore
 ```
 
-You also need to download the resources for the Localization Administration interface if you want to integrate the Localization interface into your application.
+> #### @icon-info-circle Download the Localization Admin UI Files
+> Nuget no longer allows distribution of static content, so in order to use the Localization Admin UI you also need to download the resources for the Localization Admin UI if you want to integrate the Localization interface into your application.
+> 
+> * [Localization Admin Html Assets](https://github.com/RickStrahl/Westwind.Globalization/blob/master/DownloadableAssets/LocalizationAdministrationHtml_AspNetCore.zip?raw=true)
+> * [Documentation for installing Localization Admin Files](DownloadableAssets/Readme.md) 
+>
+> Once you've downloaded the Localization Admin UI zip file, unzip the entire content into the project's root folder.
 
-* [Localization Admin Html Assets](https://github.com/RickStrahl/Westwind.Globalization/blob/Master/LocalizationAdminHtml/LocalizationAdministrationHtml_AspNetCore.zip?raw=true)
-* [Documentation for installing Localization Admin Files](DownloadableAssets/Readme.md)* 
 
 For non-Web applications or if you use only the DbRes based localization features, you can just install the base package.
 
@@ -201,17 +239,21 @@ ASP.NET Core integration works in combination with ASP.NET Core new Localization
 ### ASP.NET Core Configuration
 Configuration can be accomplished in 3 ways:
 
-1. Using a `dbResourceConfiguration.json` file
-2. Using ASP.NET Core `IConfiguration` functionality
-(which includes `appsettings.json support, Environment and User Secrets store)
-3. Explicit configuration via `AddWestwindGlobalization(opt => return true)`
+1. Using a standalone `dbResourceConfiguration.json` file
+2. Using `appsettings.json` in a `DbResourceProvider` object
+3. Additional ASP.NET Core `IConfiguration` functionality configured
+(ie. Environment variables, user secrets)
+4. Explicit configuration via `AddWestwindGlobalization(opt => return true)`
+
+Configuration values are applied in the order listed, with later assignments over-writing earlier settings.
 
 #### DbResourceConfiguration
-ASP.NET Core uses a `DbResourceConfiguration.json` file for configuration:
+You can create a standalone `DbResourceConfiguration.json` file for configuration that works both in full framework and .NET Core:
 ```json
 {
   "ResourceAccessMode": "DbResourceManager",
   "ConnectionString": "server=.;database=localizations;integrated security=true;",
+  "DataProvider": "SqlServer",
   "ResourceTableName": "Localizations",
   "ResxExportProjectType": "Project",
   "ResxBaseFolder": "~/Properties/",
@@ -219,17 +261,23 @@ ASP.NET Core uses a `DbResourceConfiguration.json` file for configuration:
   "ResourceBaseNamespace": "AppResources",
   "AddMissingResources": true,
   "LocalizationFormWebPath": "~/LocalizationAdmin/",
-  "BingClientId": "12345-4b99-47ed-be7e-caf733526020",
-  "BingClientSecret": "Screaming.Til.Your.Hoarse.SKTY",
-  "GoogleApiKey": "XXXfaSyDcvmGhGN7FlynP9QUZOLF8_4K8iF9ChWo"
+  "GoogleApiKey": "XXXfaSyDcvmGhGN7FlynP9QUZOLF8_4K8iF9ChWo",
+  "BingClientId": "12345-4b99-47ed-be7e-caf733526020"
 }
 ```
 If this file exists configuration values are read from it.
 
-#### ASP.NET Core IConfiguration
-Westwind.Globalization also registers the `DbResourceConfiguration` instance as an `IOptions<DbResourceConfiguration>` instance which allows strongly typed access to the configuration and allows configuration via:
+> #### @icon-warning Copy to Output Directory
+> If you want to use `DbResourceConfiguration.json` for configuration storage make sure you set the **Copy to Output Directory** option to **Copy if newer** or **Copy always** to ensure the file is copied into the published output folder.
+>
+> ![](images/DbResourceConfigurationJsonCopy.png)
 
-* appsettings.json
+#### ASP.NET Core IConfiguration
+For ASP.NET Core operation Westwind.Globalization also registers the `DbResourceConfiguration` instance as `IOptions<DbResourceConfiguration>` which gives strongly typed access to the configuration via depedency injection. 
+
+This means you can use any configured configuration providers - most commonly:
+
+* appsettings.json using a `DbResourceConfiguration` object
 * Environment variables
 * User Secrets store
 
@@ -241,6 +289,7 @@ You can store configuration settings in `appsettings.json` like this:
   "DbResourceConfiguration": {
     "ResourceAccessMode": "DbResourceManager",
     "ConnectionString": "server=.;database=localizations;integrated security=true;",
+    "DataProvider": "SqlServer",
     "ResourceTableName": "Localizations",
     "StronglyTypedGlobalResource": "~/Properties/Resources.cs",
     "ResourceBaseNamespace": "AppResources",
@@ -249,19 +298,22 @@ You can store configuration settings in `appsettings.json` like this:
     "AddMissingResources": true,
     "LocalizationFormWebPath": "~/LocalizationAdmin/",
     "BingClientId": "12345-4b99-47ed-be7e-caf733526020",
-    "BingClientSecret": "Screaming.Til.Your.Hoarse.SKTY",
     "GoogleApiKey": "XXXfaSyDcvmGhGN7FlynP9QUZOLF8_4K8iF9ChWo"
   }
 }
 ```
-If provided the `appsettings.json file overrides `DbResourceConfiguration.json`. We recommend you only use one of these.
+If provided the `appsettings.json` file overrides `DbResourceConfiguration.json`. 
 
-You also need to explicitly enable localization features in ASP.NET Core using the following code in the `Startup.cs` `ConfigureServices()` method:
+We recommend you only use one of the files to avoid confusion. For ASP.NET Core projects we recommend you store settings in `appsettings.json` since that gives you dependency injection for `IOptions<DbResourceConfiguration>` as well as putting configuration settings into a well-known location.
+
+### Enabling West Wind Globalization in ASP.NET Core
+You also need to explicitly enable localization features in ASP.NET Core using the following code in the `Startup.cs` file's `ConfigureServices()` method:
 
 ```cs
 public void ConfigureServices(IServiceCollection services)
 {
     // Standard ASP.NET Localization features are recommended
+    // Make sure this is done FIRST!
     services.AddLocalization(options =>
     {
         // I prefer Properties over the default `Resources` folder
@@ -269,14 +321,17 @@ public void ConfigureServices(IServiceCollection services)
         // most people do for shared resources.
         options.ResourcesPath = "Properties";
     });
-
-
-    // Optional but recommended:  Override IStringLocalizer to use DbRes instances
-    services.AddSingleton(typeof(IStringLocalizerFactory), typeof(DbResStringLocalizerFactory));
-    services.AddSingleton(typeof(IHtmlLocalizerFactory), typeof(DbResHtmlLocalizerFactory));
     
-     
-    // Required: this enables West Wind Globalization
+
+    // Replace StringLocalizers with Db Resource Implementation
+    services.AddSingleton(typeof(IStringLocalizerFactory), 
+                          typeof(DbResStringLocalizerFactory));
+    services.AddSingleton(typeof(IHtmlLocalizerFactory),
+                          typeof(DbResHtmlLocalizerFactory));
+                          
+    
+    // Required: Enable Westwind.Globalization (opt parm is optional)
+    // shown here with optional manual configuration code
     services.AddWestwindGlobalization(opt =>
     {                
         // the default settings comme from DbResourceConfiguration.json if exists
@@ -284,11 +339,14 @@ public void ConfigureServices(IServiceCollection services)
         // to the DI system (DbResourceConfiguration)
 
         // Resource Mode - from Database (or Resx for serving from Resources)
-        opt.ResourceAccessMode = ResourceAccessMode.DbResourceManager;  // ResourceAccessMode.Resx
+        opt.ResourceAccessMode = ResourceAccessMode.DbResourceManager;  // .Resx
         
         // Make sure the database you connect to exists
-        opt.ConnectionString = "server=dev.west-wind.com;database=localizations;uid=localizations;pwd=local";
+        opt.ConnectionString = "server=.;database=localizations;uid=localizations;pwd=local";
         
+        // Database provider used - Sql Server is the default
+        opt.DataProvider = DbResourceProviderTypes.SqlServer;
+
         // The table in which resources are stored
         opt.ResourceTableName = "localizations";
         
@@ -304,6 +362,8 @@ public void ConfigureServices(IServiceCollection services)
 
     });
 
+    ...
+    
     services.AddMvc();
 }
 ```
@@ -352,6 +412,7 @@ services.AddSingleton(typeof(IStringLocalizerFactory), typeof(DbResStringLocaliz
 > #### Use of IStringLocalizer is optional. 
 > You can use `DbRes.T()` or strongly typed resources directly if you prefer. However, for `DataAnnotation` localization `IStringLocalizer` is required in ASP.NET Core (shrug), so generally you'll want to add `DbResStringLocalizer` in `ConfigureServices()`.
 
+<a name="installation-fullframework"></a>
 ### Full Framework Configuration
 ```txt
 pm> Install-Package Westwind.Globalization.Web
@@ -365,6 +426,7 @@ pm> Install-Package Westwind.Globalization
 which doesn't install the web related components and HTML resources. 
 
 The .Web version installs the required assemblies, adds a few configuration entries in web.config and enables the resource provider by default. The Starter package adds sample resources and a couple of test pages. I recommend you use the .Starter package so you can ensure the provider is working and serving resources - once up and running you can remove the starter package, leaving the dependent assemblies in place.
+
 
 ### Full Framework Configuration
 ASP.NET Classic uses the web.config Configuration file for configuration
@@ -398,7 +460,6 @@ ASP.NET Classic uses the web.config Configuration file for configuration
 
     <!-- Bing Translation -->
     <add key="BingClientId" value="" />
-    <add key="BingClientSecret" value="" />    
   </DbResourceConfiguration>
 
   <!-- Enable ASP.NET Resource Provider  -->
@@ -495,7 +556,7 @@ By default a `Resources` ResourceSet has been provided for you the resources of 
 #### Import Existing Resources
 I also recommend that you first perform an *Import Resx* step to pull any existing Resx resources from the `~/Properties/` folder (or whereever) into your project. This will also import the Localization form's resources into your database so that the localization form properly localizes when running with the DbResource Provider.
 
-
+<a name="resource-usage"></a>
 ## Using Resources in your Application
 There are a number of different ways to access resources from this provider.
 
@@ -702,64 +763,117 @@ The type will be your exported class or generated Resx class and the name is the
 ASP.NET MVC uses a completely different model for Model validation based on `IStringLocalizer`. In this initial .NET Core release we don't have support for this yet, but we're working on it. It's coming in an update soon.
 
 
-## Non Sql Server Database Providers
-By default the resource providers and manager use **SQL Server** to hold the database resources. If you don't do any custom configuration in code to specify the Configuration.DbResourceDataManagerType you'll get the Sql Server provider/manager. 
+## Switching Database Providers
+By default the resource providers and manager use **SQL Server** to hold the database resources. If you don't do any custom configuration in code to specify the `DbResourceConfiguration.DbResourceDataManagerType` you'll get the Sql Server provider/manager. 
 
-However, all of the following providers are supported:
+The following providers are supported:
 
-* Sql Server (2008, 2012, Express, Azure(?))
-* Sql Server Compact
+* Sql Server (2008-2016, Sql Azure)
 * MySql
 * SqLite
+* Sql Server Compact (no .NET Core support)
 
-As mentioned previously there is very little database access that actually happens when running the application, so even local databases like SqLite or Sql Compact can be used.
+To use a specific provider, assign the `DbResourceConfiguration.DbResourceDataManagerType` to the appropriate engine you want to use during startup configuration.
 
-To use a provider other than Sql Server you need to do the following:
+* typeof(DbResourceSqlServerDataManager)
+* typeof(DbResourceMySqlDataManager)
+* typeof(DbResourceSqLiteDataManager)
+* typeof(DbResourceSqlCompactDataManager)
 
-* Add the appropriate Westwind.Globalization.<DataBase> assembly/NuGet Package
-* Specify the Configuration.DbResourceDbD
+In .NET Core you set the value in the `AddDbResourceLocalization(opt)` configuration:
+
+```cs
+services.AddWestwindGlobalization(opt =>
+    ...
+    opt.DbResourceDataManagerType = typeof(DbResourceMySqlDataManager);
+    opt.ConnectionString = "server=localhost;uid=testuser;pwd=super10seekrit;" + 
+                           "database=Localizations;charset=utf8"
+```
+
+For full framework you can set the value in the `Application_Start` handler and set the singleton configuration value:
+
+```cs
+DbResourceConfiguration.Current.DbResourceDataManagerType =
+                  typeof(DbResourceSqLiteDataManager);
+DbResourceConfiguration.Current.ConnectionString = 
+    "server=localhost;database=Localizations;" +
+    "uid=testuser;pwd=super10seekrit;charset=utf8" 
+```                  
+
+Note that the connection string can be set in configuration files (`app/web.config` in full framework, `DbResourceConfiguration.json` or `appsettings.json` in .NET Core), but the provider configuration has to be set in code.
+
+Here's a little more info on how to specify each provider and the dependencies that are required.
 
 ### Sql Server
 *no additional package needed*
+
+.NET Core:
+```
+opt.ConnectionString = "server=.;database=localizations;integrated security=true";
+// not required since it's the default
+opt.DbResourceManagerType = typeof(DbResourceSqlServerManager);
+```
+
+web.config file connection String Example:
+
+```xml
+<add name="SqlServerLocalizations"
+    connectionString="server=.;database=localizations;integrated security=true;"
+    providerName="System.Data.SqlClient" />
+```
+
+### MySql
+
+*add NuGet Package: **MySql.Data***
+
+Code Configuration:
 ```c#
-// not required - use only if you need to reset provider in code
-DbResourceConfiguration.Current.DbResourceDataManagerType = typeof(DbResourceSqlServerDataManager);
+opt.ConnectionString = "server=localhost;uid=testuser;pwd=super10seekrit;database=Localizations;charset=utf8";
+opt.DbResourceDataManagerType = typeof(DbResourceMySqlDataManager);                
+```
+
+web.config file connection String Example:
+
+```xml
+<add name="MySqlLocalizations"
+    connectionString="server=localhost;uid=testuser;pwd=super10seekrit;database=Localizations;charset=utf8" 
+    providerName="MySql.Data.MySqlClient" />
+```
+
+### SqLite
+*.NET Core add Nuget Package:* **Microsoft.Data.SqLite**
+
+*Full Framework add NuGet Package:* **System.Data.SQLite**
+
+Code Configuration:
+```c#
+opt.ConnectionString = "Data Source=./data/SqLiteLocalizations.db";
+opt.DbResourceDataManagerType = typeof(DbResourceSqLiteDataManager);
 ```  
 
-###### Connection String Example:
-	<add name="SqlServerLocalizations" connectionString="server=.;database=localizations;integrated security=true;" providerName="System.Data.SqlClient" />
+> Make sure to use a valid path where the database file can be found and used.
 
+web.config file connection String Example:
+```xml
+<add name="SqLiteLocalizations"
+    connectionString="Data Source=|DataDirectory|\SqLiteLocalizations.db"
+    providerName="System.Data.SQLite" />
+```
 
 ### Sql Server Compact
 *add NuGet Package: **Microsoft.SqlServer.Compact***
 
+**not supported on .NET Core**
+
 ```c#
 DbResourceConfiguration.Current.DbResourceDataManagerType = typeof(DbResourceSqlServerCeDataManager);
 ```
-###### Connection String Example:
-	<add name="SqlServerCeLocalizations" connectionString="Data Source=|DataDirectory|\Localizations.sdf;Persist Security Info=False;" providerName="System.Data.SqlServerCe.4.0" />
-	<add name="Localizations" connectionString="server=.;database=localizations;integrated security=true;" providerName="System.Data.SqlClient" />
-
-### MySql
-*add NuGet Package: **MySql.Data***
-```c#
-DbResourceConfiguration.Current.DbResourceDataManagerType = typeof (DbResourceMySqlDataManager);
-```
-
-###### Connection String Example:
-	<add name="MySqlLocalizations" connectionString="server=localhost;uid=testuser;pwd=super10seekrit;database=Localizations" providerName="MySql.Data.MySqlClient" />
-
-
-### SqLite
-*add NuGet Package: **System.Data.SQLite.Core*** 
-```c#
-DbResourceConfiguration.Current.DbResourceDataManagerType = typeof(DbResourceSqLiteDataManager);
-```  
-
-###### Connection String Example:
+web.config connection string example:
 
 ```xml
-<add name="SqLiteLocalizations" connectionString="Data Source=|DataDirectory|\SqLiteLocalizations.db;Version=3" providerName="System.Data.SQLite" />
+<add name="SqlServerCeLocalizations" 
+     connectionString="Data Source=|DataDirectory|\Localizations.sdf;Persist Security Info=False;" 
+     providerName="System.Data.SqlServerCe.4.0" />
 ```
 
 ### Global Data Manager Configuration

@@ -1,7 +1,8 @@
 ﻿{
-  "ResourceAccessMode": "Resx",
-  "ConnectionString": "*** NOT USED - overridden by appsettings.json ***",
-  "ResourceTableName": "Localizations",
+  "ResourceAccessMode": "DbResourceManager",
+  "ConnectionString": "server=.;database=localizations;integrated security=true",
+  "DataProvider": "SqlServer",  
+  "ResourceTableName": "Localizations_DbResourceConfigurationJson",
   "StronglyTypedGlobalResource": "~/Properties/Resources.cs",
   "ResourceBaseNamespace": "AppResources",
   "ResxExportProjectType": "Project",
@@ -10,6 +11,5 @@
   "ActiveConfiguration": null,
   "LocalizationFormWebPath": "~/LocalizationAdmin/",
   "BingClientId": "",
-  "BingClientSecret": "",
   "GoogleApiKey": ""
 }
